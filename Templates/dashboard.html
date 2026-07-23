@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>IoT SecureAuth — Control Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030810;--bg2:#060f1e;--cyan:#00f5ff;--cyan-dim:#00a8b5;--green:#00ff88;--green-dim:#00994d;--red:#ff3366;--red-dim:#99002b;--yellow:#ffcc00;--purple:#a855f7;--blue:#3b82f6;--text:#c8e0f4;--text-dim:#4a6a8a;--border:rgba(0,245,255,.12);--gc:0 0 20px rgba(0,245,255,.4);--gg:0 0 20px rgba(0,255,136,.4);--gr:0 0 20px rgba(255,51,102,.4);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,245,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 50%,rgba(0,245,255,.04) 0%,transparent 55%),radial-gradient(ellipse at 85% 20%,rgba(168,85,247,.04) 0%,transparent 55%);pointer-events:none;z-index:0;}
+.scanline{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:999;}
+
+/* HEADER */
+header{position:relative;z-index:10;padding:14px 26px;border-bottom:1px solid var(--border);background:rgba(3,8,16,.88);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:40px;height:40px;border:2px solid var(--cyan);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:var(--gc);animation:glowPulse 2s infinite;}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 8px rgba(0,245,255,.3)}50%{box-shadow:0 0 22px rgba(0,245,255,.7)}}
+.logo h1{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;color:var(--cyan);letter-spacing:3px;text-shadow:var(--gc);}
+.logo p{font-size:9px;color:var(--text-dim);letter-spacing:4px;font-family:'Share Tech Mono',monospace;}
+.hdr-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.clock{font-family:'Orbitron',monospace;font-size:18px;color:var(--cyan);text-shadow:var(--gc);letter-spacing:2px;}
+.conn-badge{display:flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--border);border-radius:20px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;transition:all .3s;}
+.conn-badge.live{border-color:var(--green);color:var(--green);box-shadow:var(--gg);}
+.conn-badge.warn{border-color:var(--yellow);color:var(--yellow);}
+.conn-badge.dead{border-color:var(--red);color:var(--red);}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hbtn{background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.5px;transition:all .2s;}
+.hbtn:hover{border-color:var(--cyan);color:var(--cyan);}
+.user-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--border);border-radius:20px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);}
+
+/* ALERT */
+#alertBanner{display:none;position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:100;background:rgba(255,51,102,.15);border:1px solid var(--red);border-radius:8px;padding:10px 22px;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--red);box-shadow:var(--gr);min-width:300px;text-align:center;animation:slideDown .3s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* MODALS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:26px;min-width:300px;max-width:400px;width:90%;animation:fadeUp .2s ease;position:relative;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);border-radius:12px 12px 0 0;}
+.modal h3{font-family:'Orbitron',monospace;font-size:12px;color:var(--cyan);letter-spacing:2px;margin-bottom:16px;}
+.modal input{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;margin-bottom:14px;}
+.modal input:focus{border-color:var(--cyan);}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+.btn{padding:7px 16px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;border:1px solid;transition:all .2s;}
+.btn-c{background:rgba(0,245,255,.08);border-color:var(--cyan);color:var(--cyan);}
+.btn-c:hover{background:rgba(0,245,255,.18);}
+.btn-r{background:rgba(255,51,102,.08);border-color:var(--red);color:var(--red);}
+.btn-r:hover{background:rgba(255,51,102,.18);}
+.btn-g{background:transparent;border-color:var(--border);color:var(--text-dim);}
+.btn-g:hover{border-color:var(--text);}
+
+/* MAIN */
+main{position:relative;z-index:1;padding:18px 26px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:1600px;margin:0 auto;}
+
+/* PANEL */
+.panel{background:rgba(6,15,30,.82);border:1px solid var(--border);border-radius:12px;padding:16px;backdrop-filter:blur(10px);position:relative;overflow:hidden;transition:border-color .3s;animation:fadeUp .5s ease backwards;}
+.panel:hover{border-color:rgba(0,245,255,.22);}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.4;}
+.ptitle{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--cyan-dim);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.ptitle-l{display:flex;align-items:center;gap:7px;}
+.ptitle-l::before{content:'';width:3px;height:12px;background:var(--cyan);box-shadow:var(--gc);border-radius:2px;}
+
+/* STATS */
+.stats-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+.sc{background:rgba(6,15,30,.82);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;transition:all .3s;animation:fadeUp .4s ease backwards;}
+.sc:hover{transform:translateY(-3px);}
+.sc.c1{border-color:rgba(0,245,255,.22);} .sc.c2{border-color:rgba(0,255,136,.22);} .sc.c3{border-color:rgba(59,130,246,.22);} .sc.c4{border-color:rgba(255,51,102,.22);} .sc.c5{border-color:rgba(255,204,0,.22);} .sc.c6{border-color:rgba(168,85,247,.22);}
+.sv{font-family:'Orbitron',monospace;font-size:24px;font-weight:900;line-height:1;margin-bottom:4px;}
+.sc.c1 .sv{color:var(--cyan);text-shadow:var(--gc);} .sc.c2 .sv{color:var(--green);text-shadow:var(--gg);} .sc.c3 .sv{color:var(--blue);} .sc.c4 .sv{color:var(--red);text-shadow:var(--gr);} .sc.c5 .sv{color:var(--yellow);} .sc.c6 .sv{color:var(--purple);}
+.sl{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);font-family:'Share Tech Mono',monospace;}
+
+/* DEVICES */
+.devices-panel{grid-column:1/3;}
+.dcard{background:rgba(3,8,16,.6);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:9px;position:relative;overflow:hidden;transition:all .3s;}
+.dcard.online{border-color:rgba(0,255,136,.28);background:rgba(0,255,136,.025);}
+.dcard.offline{border-color:rgba(255,255,255,.05);opacity:.75;}
+.dcard.blocked{border-color:rgba(255,51,102,.28);background:rgba(255,51,102,.025);}
+.dcard::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px;}
+.dcard.online::after{background:var(--green);box-shadow:var(--gg);}
+.dcard.offline::after{background:var(--text-dim);}
+.dcard.blocked::after{background:var(--red);box-shadow:var(--gr);}
+.dc-top{display:flex;align-items:center;gap:10px;}
+.dc-icon{width:38px;height:38px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:17px;border:1px solid var(--border);flex-shrink:0;}
+.dcard.online .dc-icon{border-color:rgba(0,255,136,.35);background:rgba(0,255,136,.07);}
+.dcard.blocked .dc-icon{border-color:rgba(255,51,102,.35);background:rgba(255,51,102,.07);}
+.dc-info{flex:1;min-width:0;}
+.dc-name{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.dc-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);display:flex;gap:8px;flex-wrap:wrap;}
+.dc-acts{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;align-items:center;}
+.pill{padding:2px 8px;border-radius:20px;font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;}
+.p-on{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.28);}
+.p-off{background:rgba(255,255,255,.04);color:var(--text-dim);border:1px solid rgba(255,255,255,.1);}
+.p-blk{background:rgba(255,51,102,.1);color:var(--red);border:1px solid rgba(255,51,102,.28);}
+.dcbtn{background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:3px 7px;border-radius:4px;cursor:pointer;font-size:10px;transition:all .2s;font-family:'Share Tech Mono',monospace;}
+.dcbtn:hover{border-color:var(--cyan);color:var(--cyan);}
+.dcbtn.rd:hover{border-color:var(--red);color:var(--red);}
+.dcbtn.yl:hover{border-color:var(--yellow);color:var(--yellow);}
+a.dcbtn{text-decoration:none;}
+/* Ring */
+.dc-bot{display:flex;align-items:center;gap:12px;margin-top:9px;}
+.ring-wrap{position:relative;width:44px;height:44px;flex-shrink:0;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.05);stroke-width:4;}
+.ring-fill{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke .5s;}
+.ring-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:8px;font-weight:700;}
+.tbar-info{flex:1;}
+.tbar-hdr{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);margin-bottom:3px;}
+.tbar-bg{height:3px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;}
+.tbar-fill{height:100%;border-radius:2px;transition:width 1s linear,background .5s;}
+.tbar-fill.hi{background:var(--green);box-shadow:0 0 5px rgba(0,255,136,.4);}
+.tbar-fill.md{background:var(--yellow);}
+.tbar-fill.lo{background:var(--red);animation:flicker .5s infinite;}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.5}}
+/* Sensor badge */
+.sensor-badge{display:flex;gap:8px;margin-top:7px;}
+.sb-item{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-family:'Share Tech Mono',monospace;font-size:10px;}
+.sb-item.temp{border-color:rgba(255,204,0,.25);color:var(--yellow);}
+.sb-item.hum{border-color:rgba(0,245,255,.25);color:var(--cyan);}
+
+/* LOG */
+.log-panel{grid-column:3/4;grid-row:2/5;}
+.log-search{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);color:var(--text);padding:7px 11px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:10px;outline:none;margin-bottom:8px;}
+.log-search:focus{border-color:var(--cyan);}
+.log-filters{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+.lf{background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:2px 7px;border-radius:12px;font-size:8px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;transition:all .2s;}
+.lf.fa{border-color:var(--purple);color:var(--purple);background:rgba(168,85,247,.07);}
+.lf.fs{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.07);}
+.lf.ff{border-color:var(--red);color:var(--red);background:rgba(255,51,102,.07);}
+.lf.fd{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.07);}
+.lf.fc{border-color:var(--yellow);color:var(--yellow);background:rgba(255,204,0,.07);}
+.log-list{height:340px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--cyan-dim) transparent;}
+.log-list::-webkit-scrollbar{width:3px;}
+.log-list::-webkit-scrollbar-thumb{background:var(--cyan-dim);}
+.litem{padding:6px 9px;border-left:2px solid transparent;margin-bottom:3px;border-radius:0 5px 5px 0;font-family:'Share Tech Mono',monospace;font-size:9px;background:rgba(255,255,255,.02);transition:background .2s;}
+.litem:hover{background:rgba(255,255,255,.05);}
+.litem.AUTH_SUCCESS{border-color:var(--green);}
+.litem.AUTH_FAIL{border-color:var(--red);}
+.litem.DATA_ACCEPTED{border-color:var(--cyan);}
+.litem.CHALLENGE_ISSUED{border-color:var(--yellow);}
+.litem.DEVICE_DELETED,.litem.DEVICE_UNBLOCKED{border-color:var(--purple);}
+.lev{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:1px;}
+.AUTH_SUCCESS .lev{color:var(--green);} .AUTH_FAIL .lev{color:var(--red);} .DATA_ACCEPTED .lev{color:var(--cyan);} .CHALLENGE_ISSUED .lev{color:var(--yellow);} .DEVICE_DELETED .lev,.DEVICE_UNBLOCKED .lev{color:var(--purple);}
+.lmeta{color:var(--text-dim);font-size:8px;display:flex;gap:6px;}
+
+/* EVENT BADGES */
+.events-panel{grid-column:1/3;}
+.ev-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.evb{padding:10px;border-radius:8px;text-align:center;border:1px solid transparent;transition:all .3s;}
+.evb:hover{transform:scale(1.04);}
+.evb.s{background:rgba(0,255,136,.06);border-color:rgba(0,255,136,.2);}
+.evb.f{background:rgba(255,51,102,.06);border-color:rgba(255,51,102,.2);}
+.evb.d{background:rgba(0,245,255,.06);border-color:rgba(0,245,255,.2);}
+.evb.c{background:rgba(255,204,0,.06);border-color:rgba(255,204,0,.2);}
+.ec{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;line-height:1;margin-bottom:3px;}
+.evb.s .ec{color:var(--green);} .evb.f .ec{color:var(--red);} .evb.d .ec{color:var(--cyan);} .evb.c .ec{color:var(--yellow);}
+.en{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);font-family:'Share Tech Mono',monospace;}
+
+/* CHART */
+.chart-panel{grid-column:1/3;}
+.chart-tabs{display:flex;gap:6px;margin-bottom:10px;}
+.ctab{background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:3px 10px;border-radius:10px;font-size:8px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:1px;transition:all .2s;}
+.ctab.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.07);}
+canvas{width:100%;}
+
+/* HEATMAP */
+.heatmap-panel{grid-column:1/2;}
+.hm-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;}
+.hm-cell{aspect-ratio:1;border-radius:3px;background:rgba(0,245,255,.05);transition:all .3s;cursor:default;}
+.hm-cell:hover{transform:scale(1.2);}
+
+/* SESSION TABLE */
+.session-panel{grid-column:2/3;}
+.stbl{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:10px;}
+.stbl th{color:var(--text-dim);font-size:8px;letter-spacing:2px;text-transform:uppercase;padding:5px 7px;border-bottom:1px solid var(--border);text-align:left;}
+.stbl td{padding:6px 7px;border-bottom:1px solid rgba(255,255,255,.02);color:var(--text);}
+.stbl tr:last-child td{border-bottom:none;}
+.stbl tr:hover td{background:rgba(255,255,255,.02);}
+.spill-a{background:rgba(0,255,136,.08);color:var(--green);border:1px solid rgba(0,255,136,.2);padding:1px 6px;border-radius:8px;font-size:8px;}
+.spill-e{background:rgba(255,255,255,.03);color:var(--text-dim);border:1px solid rgba(255,255,255,.07);padding:1px 6px;border-radius:8px;font-size:8px;}
+
+/* SECURITY */
+.security-panel{grid-column:3/4;}
+.shield-wrap{text-align:center;padding:6px 0 10px;}
+.shield-num{font-family:'Orbitron',monospace;font-size:40px;font-weight:900;line-height:1;}
+.shield-lbl{font-size:8px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;font-family:'Share Tech Mono',monospace;margin-top:3px;}
+.sec-item{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.sec-item:last-child{border-bottom:none;}
+.sec-k{color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;}
+.sec-v{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;}
+.ok{color:var(--green);} .warn{color:var(--yellow);} .danger{color:var(--red);}
+.threat-bar{height:5px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden;margin-top:4px;}
+.threat-fill{height:100%;border-radius:3px;transition:width 1s,background 1s;}
+
+/* SERVER INFO */
+.server-panel{grid-column:1/-1;}
+.srv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.srv-item{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;}
+.srv-icon{font-size:20px;}
+.srv-val{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--cyan);}
+.srv-label{font-size:9px;letter-spacing:1.5px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;text-transform:uppercase;}
+
+/* NETWORK */
+.net-panel{grid-column:1/-1;}
+.net-visual{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;padding:8px 0;}
+.net-node{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 16px;border:1px solid var(--border);border-radius:10px;min-width:85px;background:rgba(3,8,16,.5);transition:all .3s;cursor:pointer;text-decoration:none;}
+.net-node:hover{border-color:var(--cyan);transform:translateY(-2px);}
+.nn-icon{font-size:20px;}
+.nn-name{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px;}
+.nn-st{font-size:8px;padding:2px 5px;border-radius:8px;font-family:'Share Tech Mono',monospace;font-weight:700;}
+.ns-on{background:rgba(0,255,136,.1);color:var(--green);}
+.ns-off{background:rgba(255,51,102,.1);color:var(--red);}
+.ns-blk{background:rgba(255,51,102,.18);color:var(--red);}
+.ns-srv{background:rgba(0,245,255,.1);color:var(--cyan);}
+.net-line{flex:1;max-width:60px;min-width:16px;height:2px;background:linear-gradient(to right,var(--border),var(--cyan-dim),var(--border));position:relative;overflow:hidden;}
+.net-line.active::after{content:'';position:absolute;top:-2px;left:0;width:9px;height:6px;border-radius:3px;background:var(--cyan);box-shadow:var(--gc);animation:travel 1.5s linear infinite;}
+@keyframes travel{from{left:0;opacity:1}to{left:calc(100% - 9px);opacity:.2}}
+.net-line.inactive{opacity:.12;}
+
+/* LIGHT MODE */
+body.light{--bg:#f0f4f8;--bg2:#e2e8f0;--text:#1a2744;--text-dim:#7a8faa;--border:rgba(0,100,180,.15);--cyan:#0077cc;--cyan-dim:#0055aa;--green:#00aa55;--red:#cc2244;--yellow:#cc8800;}
+body.light::before{background-image:linear-gradient(rgba(0,100,180,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,100,180,.05) 1px,transparent 1px);}
+body.light .panel,body.light .dcard,body.light .sc,body.light .evb{background:rgba(255,255,255,.75);}
+body.light header{background:rgba(240,244,248,.92);}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div id="alertBanner"></div>
+
+<!-- RENAME MODAL -->
+<div class="overlay" id="renameModal">
+  <div class="modal">
+    <h3>✏️ RENAME DEVICE</h3>
+    <input type="text" id="renameInput" placeholder="Enter nickname..." maxlength="20"/>
+    <div class="modal-btns">
+      <button class="btn btn-g" onclick="closeModal('renameModal')">Cancel</button>
+      <button class="btn btn-c" onclick="confirmRename()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="overlay" id="deleteModal">
+  <div class="modal">
+    <h3>🗑️ DELETE DEVICE</h3>
+    <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;">Remove <strong id="delName" style="color:var(--red)"></strong> and all its sessions?</p>
+    <div class="modal-btns">
+      <button class="btn btn-g" onclick="closeModal('deleteModal')">Cancel</button>
+      <button class="btn btn-r" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="overlay" id="pwModal">
+  <div class="modal">
+    <h3>🔑 CHANGE PASSWORD</h3>
+    <input type="password" id="pw1" placeholder="New password"/>
+    <input type="password" id="pw2" placeholder="Confirm password"/>
+    <div id="pwErr" style="color:var(--red);font-family:'Share Tech Mono',monospace;font-size:10px;margin-bottom:10px;"></div>
+    <div class="modal-btns">
+      <button class="btn btn-g" onclick="closeModal('pwModal')">Cancel</button>
+      <button class="btn btn-c" onclick="confirmPw()">Save</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔐</div>
+    <div>
+      <h1>SECUREIOT</h1>
+      <p>ECC Authentication Control Center</p>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="conn-badge live" id="connBadge"><div class="dot"></div><span id="connTxt">LIVE</span></div>
+    <button class="hbtn" onclick="exportLogs()">⬇ CSV</button>
+    <button class="hbtn" onclick="toggleFullscreen()">⛶</button>
+    <button class="hbtn" onclick="toggleTheme()">☀️</button>
+    <button class="hbtn" onclick="openModal('pwModal')">🔑</button>
+    <div class="user-chip">👤 {{ session.username }}</div>
+    <a href="/logout" class="hbtn">⏻ Logout</a>
+  </div>
+</header>
+
+<main>
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="sc c1" style="animation-delay:.05s"><div class="sv" id="sT">0</div><div class="sl">Devices</div></div>
+    <div class="sc c2" style="animation-delay:.10s"><div class="sv" id="sO">0</div><div class="sl">Online</div></div>
+    <div class="sc c3" style="animation-delay:.15s"><div class="sv" id="sS">0</div><div class="sl">Auth OK</div></div>
+    <div class="sc c4" style="animation-delay:.20s"><div class="sv" id="sF">0</div><div class="sl">Auth Fail</div></div>
+    <div class="sc c5" style="animation-delay:.25s"><div class="sv" id="sD">0</div><div class="sl">Packets</div></div>
+    <div class="sc c6" style="animation-delay:.30s"><div class="sv" id="sC">0</div><div class="sl">Challenges</div></div>
+  </div>
+
+  <!-- DEVICES -->
+  <div class="panel devices-panel" style="animation-delay:.1s">
+    <div class="ptitle"><div class="ptitle-l">📡 Connected Devices</div></div>
+    <div id="deviceList"><div style="color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:11px;text-align:center;padding:20px;">Scanning...</div></div>
+  </div>
+
+  <!-- LOG -->
+  <div class="panel log-panel" style="animation-delay:.12s">
+    <div class="ptitle"><div class="ptitle-l">📋 Activity Log</div></div>
+    <input class="log-search" id="logSearch" placeholder="Search device or event..." oninput="filterLogs()"/>
+    <div class="log-filters">
+      <button class="lf fa" onclick="setFilter('ALL',this)">ALL</button>
+      <button class="lf" onclick="setFilter('AUTH_SUCCESS',this)">✅ OK</button>
+      <button class="lf" onclick="setFilter('AUTH_FAIL',this)">❌ FAIL</button>
+      <button class="lf" onclick="setFilter('DATA_ACCEPTED',this)">📦 DATA</button>
+      <button class="lf" onclick="setFilter('CHALLENGE_ISSUED',this)">🔑 CHAL</button>
+    </div>
+    <div class="log-list" id="logList"></div>
+  </div>
+
+  <!-- EVENT BADGES -->
+  <div class="panel events-panel" style="animation-delay:.15s">
+    <div class="ptitle"><div class="ptitle-l">📊 Event Counters</div></div>
+    <div class="ev-grid">
+      <div class="evb s"><div class="ec" id="evS">0</div><div class="en">Auth OK</div></div>
+      <div class="evb f"><div class="ec" id="evF">0</div><div class="en">Auth Fail</div></div>
+      <div class="evb d"><div class="ec" id="evD">0</div><div class="en">Data</div></div>
+      <div class="evb c"><div class="ec" id="evC">0</div><div class="en">Challenges</div></div>
+    </div>
+  </div>
+
+  <!-- SECURITY -->
+  <div class="panel security-panel" style="animation-delay:.17s">
+    <div class="ptitle"><div class="ptitle-l">🛡️ Security</div></div>
+    <div class="shield-wrap">
+      <div class="shield-num ok" id="secScore">100</div>
+      <div class="shield-lbl">Security Score</div>
+    </div>
+    <div class="sec-item"><span class="sec-k">ENCRYPTION</span><span class="sec-v ok">ECC-256 ✓</span></div>
+    <div class="sec-item"><span class="sec-k">CHALLENGE EXP</span><span class="sec-v ok">60s ✓</span></div>
+    <div class="sec-item"><span class="sec-k">RATE LIMIT</span><span class="sec-v ok">5/min ✓</span></div>
+    <div class="sec-item"><span class="sec-k">THREAT LEVEL</span><span class="sec-v ok" id="threatLvl">LOW</span></div>
+    <div class="threat-bar"><div class="threat-fill" id="threatFill" style="width:10%;background:var(--green);"></div></div>
+  </div>
+
+  <!-- CHART -->
+  <div class="panel chart-panel" style="animation-delay:.2s">
+    <div class="ptitle">
+      <div class="ptitle-l">📈 Analytics</div>
+      <div class="chart-tabs">
+        <button class="ctab active" onclick="setChart('timeline',this)">Timeline</button>
+        <button class="ctab" onclick="setChart('rate',this)">Success Rate</button>
+      </div>
+    </div>
+    <canvas id="mainChart" height="90"></canvas>
+  </div>
+
+  <!-- HEATMAP -->
+  <div class="panel heatmap-panel" style="animation-delay:.22s">
+    <div class="ptitle"><div class="ptitle-l">🌡️ 24h Heatmap</div></div>
+    <div class="hm-grid" id="heatmapGrid"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:5px;">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--text-dim);">00:00</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--text-dim);">12:00</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--text-dim);">23:00</span>
+    </div>
+  </div>
+
+  <!-- SESSIONS -->
+  <div class="panel session-panel" style="animation-delay:.24s">
+    <div class="ptitle"><div class="ptitle-l">🔑 Session History</div></div>
+    <div style="overflow-x:auto;max-height:180px;overflow-y:auto;">
+      <table class="stbl" id="sessionTable">
+        <thead><tr><th>Device</th><th>Token</th><th>Created</th><th>Expires</th><th>Status</th></tr></thead>
+        <tbody id="sessionBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SERVER INFO -->
+  <div class="panel server-panel" style="animation-delay:.26s">
+    <div class="ptitle"><div class="ptitle-l">🖥️ Server Health</div></div>
+    <div class="srv-grid">
+      <div class="srv-item"><div class="srv-icon">⏱</div><div><div class="srv-val" id="srvUptime">--</div><div class="srv-label">Uptime</div></div></div>
+      <div class="srv-item"><div class="srv-icon">🗄</div><div><div class="srv-val" id="srvDB">-- KB</div><div class="srv-label">DB Size</div></div></div>
+      <div class="srv-item"><div class="srv-icon">📦</div><div><div class="srv-val" id="srvTotal">0</div><div class="srv-label">Total Logs</div></div></div>
+      <div class="srv-item"><div class="srv-icon">🔗</div><div><div class="srv-val" id="srvSessions">0</div><div class="srv-label">Active Sessions</div></div></div>
+    </div>
+  </div>
+
+  <!-- NETWORK -->
+  <div class="panel net-panel" style="animation-delay:.28s">
+    <div class="ptitle"><div class="ptitle-l">🌐 Network Topology</div><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);">click device for details</span></div>
+    <div class="net-visual" id="netVisual"></div>
+  </div>
+</main>
+
+<script>
+// ── State ──────────────────────────────────────
+let allLogs=[], activeFilter='ALL', logQuery='', failCount=0, darkMode=true;
+let renameTarget=null, deleteTarget=null;
+let chartMode='timeline', chartData={}, rateData=[];
+let prevFails=0;
+
+// ── Clock ──────────────────────────────────────
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById('clock').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
+},1000);
+
+// ── Theme / Fullscreen ─────────────────────────
+function toggleTheme(){darkMode=!darkMode;document.body.classList.toggle('light',!darkMode);}
+function toggleFullscreen(){!document.fullscreenElement?document.documentElement.requestFullscreen():document.exitFullscreen();}
+function exportLogs(){window.open('/api/logs/export','_blank');}
+
+// ── Alert ──────────────────────────────────────
+let alertTimer=null;
+function showAlert(msg){
+  const b=document.getElementById('alertBanner');
+  b.textContent='⚠️  '+msg; b.style.display='block';
+  if(alertTimer)clearTimeout(alertTimer);
+  alertTimer=setTimeout(()=>{b.style.display='none';},5000);
+  try{const ac=new AudioContext(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=880;g.gain.value=0.08;o.start();o.stop(ac.currentTime+0.12);}catch(e){}
+  if(Notification.permission==='granted') new Notification('IoT SecureAuth',{body:msg});
+}
+if(Notification.permission==='default')Notification.requestPermission();
+
+// ── Animate numbers ────────────────────────────
+function animNum(el,target){
+  const cur=parseInt(el.textContent)||0;
+  if(cur===target)return;
+  const steps=Math.min(Math.abs(target-cur),12),step=target>cur?1:-1;
+  let i=0;const iv=setInterval(()=>{el.textContent=(parseInt(el.textContent)||0)+step;if(++i>=steps){el.textContent=target;clearInterval(iv);}},25);
+}
+
+// ── Modals ─────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+function openRename(id,cur){renameTarget=id;document.getElementById('renameInput').value=cur;openModal('renameModal');setTimeout(()=>document.getElementById('renameInput').focus(),100);}
+async function confirmRename(){
+  const nick=document.getElementById('renameInput').value.trim();
+  if(!nick||!renameTarget)return;
+  await fetch('/api/device/rename',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:renameTarget,nickname:nick})});
+  closeModal('renameModal');fetchStats();
+}
+function openDelete(id){deleteTarget=id;document.getElementById('delName').textContent=id;openModal('deleteModal');}
+async function confirmDelete(){
+  if(!deleteTarget)return;
+  await fetch('/api/device/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:deleteTarget})});
+  closeModal('deleteModal');fetchStats();
+}
+async function unblock(id){
+  await fetch('/api/device/unblock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:id})});
+  fetchStats();
+}
+async function confirmPw(){
+  const p1=document.getElementById('pw1').value,p2=document.getElementById('pw2').value;
+  const err=document.getElementById('pwErr');
+  if(!p1||p1!==p2){err.textContent='Passwords do not match!';return;}
+  err.textContent='';
+  await fetch('/api/change_password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({new_password:p1})});
+  closeModal('pwModal');
+  document.getElementById('pw1').value='';document.getElementById('pw2').value='';
+  showAlert('Password changed successfully!');
+}
+
+// ── Render devices ─────────────────────────────
+function renderDevices(devices){
+  const c=document.getElementById('deviceList');
+  if(!devices||!devices.length){c.innerHTML=`<div style="color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:11px;text-align:center;padding:20px;">No devices registered</div>`;return;}
+  const CIRC=2*Math.PI*20;
+  c.innerHTML=devices.map(d=>{
+    const st=d.status.toLowerCase();
+    const pct=d.token_percent||0,rem=d.token_remaining||0;
+    const bc=pct>60?'hi':pct>25?'md':'lo';
+    const rc=pct>60?'var(--green)':pct>25?'var(--yellow)':'var(--red)';
+    const pill=st==='online'?'p-on':st==='blocked'?'p-blk':'p-off';
+    const icon=st==='online'?'📡':st==='blocked'?'🚫':'📴';
+    const sensorBadge=d.last_temp!=null?`<div class="sensor-badge"><span class="sb-item temp">🌡 ${d.last_temp}°C</span><span class="sb-item hum">💧 ${d.last_hum}%</span></div>`:'';
+    return `
+    <div class="dcard ${st}">
+      <div class="dc-top">
+        <div class="dc-icon">${icon}</div>
+        <div class="dc-info">
+          <div class="dc-name">${d.nickname||d.device_id} <span style="font-size:8px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;">(${d.device_id})</span></div>
+          <div class="dc-sub"><span>⏱ ${d.last_seen_str||'Never'}</span>${rem>0?`<span>🔑 ${rem}s</span>`:''}</div>
+          ${sensorBadge}
+        </div>
+        <div class="dc-acts">
+          <span class="pill ${pill}">${d.status}</span>
+          <a href="/device/${d.device_id}" class="dcbtn" title="Details">📊</a>
+          <button class="dcbtn" onclick="openRename('${d.device_id}','${d.nickname||d.device_id}')" title="Rename">✏️</button>
+          ${d.blocked?`<button class="dcbtn yl" onclick="unblock('${d.device_id}')" title="Unblock">🔓</button>`:''}
+          <button class="dcbtn rd" onclick="openDelete('${d.device_id}')" title="Delete">🗑</button>
+        </div>
+      </div>
+      ${rem>0?`
+      <div class="dc-bot">
+        <div class="ring-wrap">
+          <svg width="44" height="44" viewBox="0 0 44 44">
+            <circle class="ring-bg" cx="22" cy="22" r="18"/>
+            <circle class="ring-fill" cx="22" cy="22" r="18" stroke="${rc}" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC*(1-pct/100)}"/>
+          </svg>
+          <div class="ring-txt" style="color:${rc}">${pct}%</div>
+        </div>
+        <div class="tbar-info">
+          <div class="tbar-hdr"><span>TOKEN</span><span>${rem}s</span></div>
+          <div class="tbar-bg"><div class="tbar-fill ${bc}" style="width:${pct}%"></div></div>
+        </div>
+      </div>`:``}
+    </div>`;
+  }).join('');
+}
+
+// ── Log filter ─────────────────────────────────
+function setFilter(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.lf').forEach(b=>{b.className='lf';});
+  btn.classList.add(f==='ALL'?'fa':f==='AUTH_SUCCESS'?'fs':f==='AUTH_FAIL'?'ff':f==='DATA_ACCEPTED'?'fd':'fc');
+  renderLogs(allLogs);
+}
+function filterLogs(){logQuery=document.getElementById('logSearch').value.toLowerCase();renderLogs(allLogs);}
+const LI={AUTH_SUCCESS:'✅',AUTH_FAIL:'❌',DATA_ACCEPTED:'📦',CHALLENGE_ISSUED:'🔑',DEVICE_DELETED:'🗑',DEVICE_UNBLOCKED:'🔓'};
+function renderLogs(logs){
+  allLogs=logs;
+  const c=document.getElementById('logList');
+  let f=logs;
+  if(activeFilter!=='ALL')f=f.filter(l=>l.event===activeFilter);
+  if(logQuery)f=f.filter(l=>(l.device_id+l.event+(l.ip||'')).toLowerCase().includes(logQuery));
+  if(!f.length){c.innerHTML=`<div style="color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:10px;text-align:center;padding:16px;">No matching events</div>`;return;}
+  c.innerHTML=f.map(l=>`<div class="litem ${l.event}"><div class="lev">${LI[l.event]||'▸'} ${l.event.replace(/_/g,' ')}</div><div class="lmeta"><span>${l.device_id}</span><span>${l.time_str}</span><span>${l.ip||''}</span></div></div>`).join('');
+}
+
+// ── Sessions table ─────────────────────────────
+function renderSessions(sessions){
+  const b=document.getElementById('sessionBody');
+  if(!sessions||!sessions.length){b.innerHTML=`<tr><td colspan="5" style="color:var(--text-dim);text-align:center;padding:12px;font-family:'Share Tech Mono',monospace;font-size:10px;">No sessions</td></tr>`;return;}
+  b.innerHTML=sessions.map(s=>`<tr><td>${s.device_id}</td><td style="color:var(--text-dim)">${s.token}</td><td>${s.created_str}</td><td>${s.expiry_str}</td><td><span class="${s.active?'spill-a':'spill-e'}">${s.active?'ACTIVE':'EXPIRED'}</span></td></tr>`).join('');
+}
+
+// ── Chart ──────────────────────────────────────
+let curChartMode='timeline';
+function setChart(mode,btn){
+  curChartMode=mode;
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawChart();
+}
+function drawChart(){
+  const canvas=document.getElementById('mainChart');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.offsetWidth;const H=90;
+  canvas.width=W;canvas.height=H;
+  ctx.clearRect(0,0,W,H);
+  if(curChartMode==='timeline'){
+    const events=chartData.chart_events||[];
+    if(!events.length)return;
+    const rev=[...events].reverse();
+    const bw=Math.max(3,W/rev.length-3);
+    rev.forEach((e,i)=>{
+      const isOk=e.event==='AUTH_SUCCESS';
+      const x=i*(bw+3),bh=isOk?H*0.7:H*0.38;
+      ctx.shadowColor=isOk?'rgba(0,255,136,.5)':'rgba(255,51,102,.5)';ctx.shadowBlur=5;
+      ctx.fillStyle=isOk?'#00ff88':'#ff3366';
+      ctx.beginPath();ctx.roundRect(x,H-bh,bw,bh,[2,2,0,0]);ctx.fill();
+    });
+  } else {
+    const rd=chartData.rate_data||[];
+    if(!rd.length)return;
+    const bw=Math.max(4,W/rd.length-4);
+    rd.forEach((r,i)=>{
+      const total=(r.success+r.fail)||1;
+      const sH=H*(r.success/total)*0.85;
+      const fH=H*(r.fail/total)*0.85;
+      const x=i*(bw+4);
+      if(sH>0){ctx.shadowColor='rgba(0,255,136,.4)';ctx.shadowBlur=4;ctx.fillStyle='#00ff88';ctx.beginPath();ctx.roundRect(x,H-sH,bw/2-1,sH,[2,2,0,0]);ctx.fill();}
+      if(fH>0){ctx.shadowColor='rgba(255,51,102,.4)';ctx.shadowBlur=4;ctx.fillStyle='#ff3366';ctx.beginPath();ctx.roundRect(x+bw/2+1,H-fH,bw/2-1,fH,[2,2,0,0]);ctx.fill();}
+      ctx.shadowBlur=0;ctx.fillStyle='rgba(255,255,255,.2)';ctx.font='7px Share Tech Mono';ctx.textAlign='center';
+      ctx.fillText(r.label,x+bw/2,H-2);
+    });
+  }
+  ctx.shadowBlur=0;
+}
+
+// ── Heatmap ────────────────────────────────────
+function renderHeatmap(hourly){
+  const g=document.getElementById('heatmapGrid');
+  const maxV=Math.max(1,...Object.values(hourly).map(Number));
+  let html='';
+  for(let h=0;h<24;h++){
+    const hr=String(h).padStart(2,'0'),val=hourly[hr]||0,pct=val/maxV;
+    const a=0.05+pct*0.75;
+    const color=pct>0.6?`rgba(0,245,255,${a})`:pct>0.3?`rgba(0,255,136,${a})`:`rgba(0,245,255,${a})`;
+    html+=`<div class="hm-cell" style="background:${color}" title="${hr}:00 — ${val} events"></div>`;
+  }
+  g.innerHTML=html;
+}
+
+// ── Network topology ───────────────────────────
+function renderTopology(devices){
+  const c=document.getElementById('netVisual');
+  if(!devices||!devices.length){c.innerHTML=`<div style="color:var(--text-dim);font-size:11px;">No devices</div>`;return;}
+  let html='';
+  devices.forEach(d=>{
+    const st=d.status.toLowerCase();
+    const ns=st==='online'?'ns-on':st==='blocked'?'ns-blk':'ns-off';
+    const ic=st==='online'?'📡':st==='blocked'?'🚫':'📴';
+    html+=`<a href="/device/${d.device_id}" class="net-node"><div class="nn-icon">${ic}</div><div class="nn-name">${d.nickname||d.device_id}</div><div class="nn-st ${ns}">${d.status.toUpperCase()}</div></a>`;
+    html+=`<div class="net-line ${st==='online'?'active':'inactive'}"></div>`;
+  });
+  html+=`<div class="net-node" style="cursor:default"><div class="nn-icon">🖥️</div><div class="nn-name">SERVER</div><div class="nn-st ns-srv">RUNNING</div></div>`;
+  c.innerHTML=html;
+}
+
+// ── Security score ─────────────────────────────
+function updateSecurity(stats){
+  const total=(stats.auth_success||0)+(stats.auth_fail||0);
+  const fr=total>0?stats.auth_fail/total:0;
+  const score=Math.max(0,Math.round(100-fr*100));
+  const el=document.getElementById('secScore');
+  animNum(el,score);
+  el.className='shield-num '+(score>=80?'ok':score>=50?'warn':'danger');
+  const tl=document.getElementById('threatLvl'),tf=document.getElementById('threatFill');
+  if(fr<0.1){tl.textContent='LOW';tl.className='sec-v ok';tf.style.cssText='width:10%;background:var(--green)';}
+  else if(fr<0.3){tl.textContent='MEDIUM';tl.className='sec-v warn';tf.style.cssText='width:50%;background:var(--yellow)';}
+  else{tl.textContent='HIGH';tl.className='sec-v danger';tf.style.cssText='width:85%;background:var(--red)';}
+  if(stats.auth_fail>prevFails) showAlert(`Auth failure detected! Total: ${stats.auth_fail}`);
+  prevFails=stats.auth_fail||0;
+}
+
+// ── Connection badge ───────────────────────────
+function setConn(s){
+  const b=document.getElementById('connBadge'),t=document.getElementById('connTxt');
+  b.className='conn-badge';
+  if(s==='live'){b.classList.add('live');t.textContent='LIVE';}
+  else if(s==='warn'){b.classList.add('warn');t.textContent='RECONNECTING';}
+  else{b.classList.add('dead');t.textContent='OFFLINE';}
+}
+
+// ── Main fetch ─────────────────────────────────
+async function fetchStats(){
+  try{
+    const r=await fetch('/api/stats');
+    if(r.status===401||r.status===302){window.location='/login';return;}
+    const data=await r.json();
+    failCount=0;setConn('live');
+    const s=data.stats||{};
+    animNum(document.getElementById('sT'),s.total_devices||0);
+    animNum(document.getElementById('sO'),s.online_devices||0);
+    animNum(document.getElementById('sS'),s.auth_success||0);
+    animNum(document.getElementById('sF'),s.auth_fail||0);
+    animNum(document.getElementById('sD'),s.data_packets||0);
+    animNum(document.getElementById('sC'),s.challenges||0);
+    const ec=data.event_counts||{};
+    animNum(document.getElementById('evS'),ec.AUTH_SUCCESS||0);
+    animNum(document.getElementById('evF'),ec.AUTH_FAIL||0);
+    animNum(document.getElementById('evD'),ec.DATA_ACCEPTED||0);
+    animNum(document.getElementById('evC'),ec.CHALLENGE_ISSUED||0);
+    renderDevices(data.devices||[]);
+    renderLogs(data.logs||[]);
+    renderSessions(data.sessions||[]);
+    renderTopology(data.devices||[]);
+    renderHeatmap(data.hourly_data||{});
+    chartData=data;drawChart();
+    updateSecurity(s);
+    if(data.server){
+      document.getElementById('srvUptime').textContent=data.server.uptime||'--';
+      document.getElementById('srvDB').textContent=data.server.db_size||'--';
+    }
+    animNum(document.getElementById('srvTotal'),(data.logs||[]).length);
+    animNum(document.getElementById('srvSessions'),(data.sessions||[]).filter(s=>s.active).length);
+  }catch(e){
+    if(++failCount>=5)setConn('dead');
+    else if(failCount>=2)setConn('warn');
+  }
+}
+
+fetchStats();
+setInterval(fetchStats,3000);
+</script>
+</body>
+</html>

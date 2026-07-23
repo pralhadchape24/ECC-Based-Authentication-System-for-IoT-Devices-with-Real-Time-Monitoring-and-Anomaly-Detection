@@ -1,0 +1,31 @@
+Step 1 — Install dependencies
+bashpip install flask cryptography
+Step 2 — Initialize the database (only once)
+bashpython3 init_db.py
+Step 3 — Generate ECC key pair (only once)
+bashpython3 generate_keys.py
+This creates private_key.pem (stays on the IoT device) and public_key.pem (uploaded to the server).
+Step 4 — Register the device
+bashpython3 register_device.py
+This stores ESP001's public key in the database.
+Step 5 — Start the Flask server
+bashpython3 app.py
+Server runs at http://localhost:5000
+Step 6 — Simulate authentication (full flow)
+Terminal 1 — Request a challenge:
+bash   curl -X POST http://localhost:5000/request_challenge \
+  -H "Content-Type: application/json" \
+  -d '{"device_id": "ESP001"}'
+# Returns: {"challenge": "abc123..."}
+Terminal 2 — Sign the challenge:
+bash    python3 sign_test.py
+
+Terminal 3 — Verify and get token:
+bash curl -X POST http://localhost:5000/verify \
+  -H "Content-Type: application/json" \
+  -d '{"device_id": "ESP001", "signature": "<paste_signature_here>"}'
+# Returns: {"status": "Authenticated", "token": "...", "expires_in": 300}
+Terminal 4 — Use the token:
+bash   curl -X POST http://localhost:5000/send_data \
+  -H "Authorization: <paste_token_here>"
+# Returns: {"status": "Data Accepted"}

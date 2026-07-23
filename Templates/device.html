@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Device Detail — IoT SecureAuth</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030810;--bg2:#060f1e;--cyan:#00f5ff;--cyan-dim:#00a8b5;--green:#00ff88;--red:#ff3366;--yellow:#ffcc00;--text:#c8e0f4;--text-dim:#4a6a8a;--border:rgba(0,245,255,.12);--gc:0 0 20px rgba(0,245,255,.4);--gg:0 0 20px rgba(0,255,136,.4);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,245,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;}
+header{padding:14px 28px;border-bottom:1px solid var(--border);background:rgba(3,8,16,.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Orbitron',monospace;font-size:15px;font-weight:900;color:var(--cyan);letter-spacing:3px;text-shadow:var(--gc);}
+.back-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:6px 14px;border-radius:6px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;}
+.back-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+main{padding:24px 28px;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
+.panel{background:rgba(6,15,30,.82);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;animation:fadeUp .4s ease backwards;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.4;}
+.panel-title{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--cyan-dim);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.panel-title::before{content:'';width:3px;height:13px;background:var(--cyan);border-radius:2px;}
+.device-hero{grid-column:1/-1;display:flex;align-items:center;gap:20px;}
+.hero-icon{font-size:48px;width:80px;height:80px;border:2px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.hero-icon.online{border-color:rgba(0,255,136,.4);background:rgba(0,255,136,.06);box-shadow:var(--gg);}
+.hero-icon.offline{border-color:rgba(255,255,255,.08);}
+.hero-icon.blocked{border-color:rgba(255,51,102,.4);background:rgba(255,51,102,.06);}
+.hero-name{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;color:var(--text);}
+.hero-id{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-dim);margin-top:2px;}
+.hero-status{display:inline-block;margin-top:6px;padding:3px 12px;border-radius:20px;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2px;}
+.hs-online{background:rgba(0,255,136,.12);color:var(--green);border:1px solid rgba(0,255,136,.3);}
+.hs-offline{background:rgba(255,255,255,.04);color:var(--text-dim);border:1px solid rgba(255,255,255,.1);}
+.hs-blocked{background:rgba(255,51,102,.12);color:var(--red);border:1px solid rgba(255,51,102,.3);}
+.stat-row{display:flex;gap:12px;margin-top:10px;}
+.mini-stat{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center;flex:1;}
+.ms-val{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;}
+.ms-label{font-size:9px;letter-spacing:2px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;text-transform:uppercase;}
+.ms-green .ms-val{color:var(--green);}
+.ms-red   .ms-val{color:var(--red);}
+.ms-cyan  .ms-val{color:var(--cyan);}
+/* Sensor chart */
+.chart-wrap{height:120px;position:relative;margin-top:4px;}
+canvas{width:100%;height:120px;}
+/* Tables */
+.tbl{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:11px;}
+.tbl th{color:var(--text-dim);font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;}
+.tbl td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--text);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(255,255,255,.03);}
+.ev-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;}
+.dot-ok{background:var(--green);box-shadow:var(--gg);}
+.dot-fail{background:var(--red);}
+.dot-data{background:var(--cyan);}
+.dot-chal{background:var(--yellow);}
+.pill-active{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.25);padding:2px 7px;border-radius:10px;font-size:9px;}
+.pill-expired{background:rgba(255,255,255,.04);color:var(--text-dim);border:1px solid rgba(255,255,255,.08);padding:2px 7px;border-radius:10px;font-size:9px;}
+.sensor-val{text-align:center;padding:10px 0;}
+.sv-num{font-family:'Orbitron',monospace;font-size:36px;font-weight:900;line-height:1;}
+.sv-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);font-family:'Share Tech Mono',monospace;margin-top:3px;}
+.temp-val{color:var(--yellow);}
+.hum-val{color:var(--cyan);}
+.scroll-box{max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--cyan-dim) transparent;}
+.scroll-box::-webkit-scrollbar{width:3px;}
+.scroll-box::-webkit-scrollbar-thumb{background:var(--cyan-dim);}
+.log-item{padding:7px 10px;border-left:2px solid transparent;margin-bottom:3px;border-radius:0 6px 6px 0;font-family:'Share Tech Mono',monospace;font-size:10px;background:rgba(255,255,255,.02);}
+.log-item.AUTH_SUCCESS{border-color:var(--green);}
+.log-item.AUTH_FAIL{border-color:var(--red);}
+.log-item.DATA_ACCEPTED{border-color:var(--cyan);}
+.log-item.CHALLENGE_ISSUED{border-color:var(--yellow);}
+.log-ev{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.AUTH_SUCCESS .log-ev{color:var(--green);}
+.AUTH_FAIL .log-ev{color:var(--red);}
+.DATA_ACCEPTED .log-ev{color:var(--cyan);}
+.CHALLENGE_ISSUED .log-ev{color:var(--yellow);}
+.log-meta{color:var(--text-dim);font-size:9px;display:flex;gap:8px;margin-top:1px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🔐 SECUREIOT</div>
+  <a href="/" class="back-btn">← Back to Dashboard</a>
+</header>
+<main id="main">
+  <div style="grid-column:1/-1;text-align:center;padding:40px;font-family:'Share Tech Mono',monospace;color:var(--text-dim);">Loading device data...</div>
+</main>
+
+<script>
+const DEVICE_ID = "{{ device_id }}";
+const ICONS = {AUTH_SUCCESS:'✅',AUTH_FAIL:'❌',DATA_ACCEPTED:'📦',CHALLENGE_ISSUED:'🔑'};
+
+// ── Per-device sensor config ───────────────────────────────
+// ESP001: temperature / humidity / distance (DHT22 + HC-SR04)
+// ESP002: smoke_ppm stored in temp col, smoke_raw in hum col, flame(0/1) in dist col
+const SENSOR_CONFIG = {
+  ESP002: {
+    icon: '🔥',
+    title: '🔥 Smoke & Flame Reading',
+    chartTitle: '📈 Smoke History',
+    fields: [
+      { key: 'temp', label: 'Smoke PPM',  color: 'var(--yellow)', fmt: v => v != null ? v.toFixed(1) : '--',  unit: '' },
+      { key: 'hum',  label: 'Raw ADC',    color: 'var(--cyan)',   fmt: v => v != null ? Math.round(v) : '--', unit: '' },
+      { key: 'dist', label: 'Flame',      color: null,            fmt: v => v >= 1 ? '🔥 YES' : '✅ NO',
+        colorFn: v => v >= 1 ? 'var(--red)' : 'var(--green)' },
+    ],
+    chartLines: [
+      { key: 'temp', color: '#ffcc00', shadow: 'rgba(255,204,0,.5)',  dash: false, label: 'Smoke PPM' },
+      { key: 'hum',  color: '#00f5ff', shadow: 'rgba(0,245,255,.5)',  dash: false, label: 'Raw ADC'   },
+    ],
+  },
+};
+
+function getSensorConfig(deviceId) {
+  return SENSOR_CONFIG[deviceId] || null;
+}
+
+async function load() {
+  const r    = await fetch(`/api/device/${DEVICE_ID}`);
+  const data = await r.json();
+  if(data.error){
+    document.getElementById('main').innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--red);font-family:'Share Tech Mono',monospace;">Device not found</div>`;
+    return;
+  }
+
+  const st  = data.status.toLowerCase();
+  const hsc = st==='online'?'hs-online':st==='blocked'?'hs-blocked':'hs-offline';
+  const hic = st;
+  const cfg = getSensorConfig(DEVICE_ID);
+
+  // ── Sensor latest panel HTML ───────────────────────────
+  function sensorLatestHTML() {
+    if (!data.sensor_latest) {
+      return `<div style="color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:11px;text-align:center;padding:20px;">No sensor data yet</div>`;
+    }
+    if (cfg) {
+      // Custom device layout
+      return `<div style="display:grid;grid-template-columns:${cfg.fields.map(()=>'1fr').join(' ')};gap:12px;">
+        ${cfg.fields.map(f => {
+          const raw   = data.sensor_latest[f.key];
+          const val   = f.fmt(raw);
+          const color = f.colorFn ? f.colorFn(raw) : f.color;
+          return `<div class="sensor-val">
+            <div class="sv-num" style="color:${color}">${val}</div>
+            <div class="sv-label">${f.label}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+    // Default ESP001-style layout
+    return `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div class="sensor-val">
+        <div class="sv-num temp-val">${data.sensor_latest.temp}°</div>
+        <div class="sv-label">Temperature</div>
+      </div>
+      <div class="sensor-val">
+        <div class="sv-num hum-val">${data.sensor_latest.hum}%</div>
+        <div class="sv-label">Humidity</div>
+      </div>
+      <div class="sensor-val">
+        <div class="sv-num" style="color:var(--green)">${data.sensor_latest.dist >= 0 ? data.sensor_latest.dist + '<span style="font-size:18px"> cm</span>' : '--'}</div>
+        <div class="sv-label">Distance</div>
+      </div>
+    </div>`;
+  }
+
+  const sensorPanelTitle = cfg ? cfg.title      : '🌡️ Latest Sensor Reading';
+  const chartPanelTitle  = cfg ? cfg.chartTitle  : '📈 Sensor History';
+
+  document.getElementById('main').innerHTML = `
+    <!-- Hero -->
+    <div class="panel device-hero" style="animation-delay:.05s">
+      <div class="hero-icon ${hic}">${st==='online'?'📡':st==='blocked'?'🚫':'📴'}</div>
+      <div>
+        <div class="hero-name">${data.nickname}</div>
+        <div class="hero-id">ID: ${data.device_id} &nbsp;|&nbsp; Last seen: ${data.last_seen}</div>
+        <div class="hero-status ${hsc}">${data.status.toUpperCase()}</div>
+        <div class="stat-row">
+          <div class="mini-stat ms-green"><div class="ms-val">${data.stats.auth_ok}</div><div class="ms-label">Auth OK</div></div>
+          <div class="mini-stat ms-red">  <div class="ms-val">${data.stats.auth_fail}</div><div class="ms-label">Auth Fail</div></div>
+          <div class="mini-stat ms-cyan"> <div class="ms-val">${data.stats.data}</div><div class="ms-label">Data Packets</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sensor latest -->
+    <div class="panel" style="animation-delay:.1s">
+      <div class="panel-title">${sensorPanelTitle}</div>
+      ${sensorLatestHTML()}
+    </div>
+
+    <!-- Sensor chart -->
+    <div class="panel" style="animation-delay:.15s">
+      <div class="panel-title">${chartPanelTitle}</div>
+      <div class="chart-wrap"><canvas id="sensorChart"></canvas></div>
+    </div>
+
+    <!-- Sessions -->
+    <div class="panel" style="animation-delay:.2s">
+      <div class="panel-title">🔑 Session History</div>
+      <div class="scroll-box">
+        <table class="tbl">
+          <thead><tr><th>Token</th><th>Created</th><th>Expires</th><th>Status</th></tr></thead>
+          <tbody>
+            ${data.sessions.map(s=>`
+            <tr>
+              <td>${s.token}</td>
+              <td>${s.created}</td>
+              <td>${s.expiry}</td>
+              <td><span class="${s.active?'pill-active':'pill-expired'}">${s.active?'ACTIVE':'EXPIRED'}</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Activity log -->
+    <div class="panel" style="grid-column:2/4;animation-delay:.25s">
+      <div class="panel-title">📋 Activity Log</div>
+      <div class="scroll-box">
+        ${data.logs.map(l=>`
+        <div class="log-item ${l.event}">
+          <div class="log-ev">${ICONS[l.event]||'▸'} ${l.event.replace(/_/g,' ')}</div>
+          <div class="log-meta"><span>${l.time}</span><span>${l.ip||''}</span></div>
+        </div>`).join('')}
+      </div>
+    </div>
+  `;
+
+  // ── Draw sensor chart ──────────────────────────────────
+  if(data.sensor && data.sensor.length > 0) {
+    const canvas = document.getElementById('sensorChart');
+    const ctx    = canvas.getContext('2d');
+    const W = canvas.offsetWidth; const H = 120;
+    canvas.width = W; canvas.height = H;
+    const rev = [...data.sensor].reverse();
+    const sx  = W / (rev.length - 1 || 1);
+
+    ctx.clearRect(0, 0, W, H);
+
+    if (cfg && cfg.chartLines) {
+      // Custom chart lines for ESP002 (or any device with a config)
+      cfg.chartLines.forEach(line => {
+        const vals = rev.map(s => s[line.key]).filter(v => v != null);
+        if (vals.length < 2) return;
+        const minV = Math.min(...vals) - 1;
+        const maxV = Math.max(...vals) + 1;
+        ctx.beginPath();
+        ctx.strokeStyle = line.color;
+        ctx.lineWidth   = 2;
+        ctx.shadowColor = line.shadow;
+        ctx.shadowBlur  = 6;
+        if (line.dash) ctx.setLineDash([5, 4]);
+        let first = true;
+        rev.forEach((s, i) => {
+          const v = s[line.key];
+          if (v == null) return;
+          const x = i * sx;
+          const y = H - ((v - minV) / (maxV - minV || 1)) * (H - 10) - 5;
+          first ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          first = false;
+        });
+        ctx.stroke();
+        if (line.dash) ctx.setLineDash([]);
+      });
+    } else {
+      // Default chart for ESP001 (temp + hum + dist)
+      const temps = rev.map(s => s.temp);
+      const minT  = Math.min(...temps) - 2;
+      const maxT  = Math.max(...temps) + 2;
+
+      // Temp line
+      ctx.beginPath();
+      ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(255,204,0,.5)'; ctx.shadowBlur = 6;
+      rev.forEach((s, i) => {
+        const x = i * sx;
+        const y = H - ((s.temp - minT) / (maxT - minT || 1)) * (H - 10) - 5;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Hum line
+      ctx.beginPath();
+      ctx.strokeStyle = '#00f5ff'; ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(0,245,255,.5)';
+      rev.forEach((s, i) => {
+        const x = i * sx;
+        const y = H - (s.hum / 100) * (H - 10) - 5;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Distance line (dashed green)
+      const dists = rev.map(s => s.dist).filter(d => d !== null && d >= 0);
+      if (dists.length > 1) {
+        const minD = Math.min(...dists) - 2;
+        const maxD = Math.max(...dists) + 2;
+        ctx.beginPath();
+        ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 2;
+        ctx.shadowColor = 'rgba(0,255,136,.5)'; ctx.shadowBlur = 6;
+        ctx.setLineDash([5, 4]);
+        let first = true;
+        rev.forEach((s, i) => {
+          if (s.dist === null || s.dist < 0) return;
+          const x = i * sx;
+          const y = H - ((s.dist - minD) / (maxD - minD || 1)) * (H - 10) - 5;
+          first ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          first = false;
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+    ctx.shadowBlur = 0;
+  }
+}
+
+load();
+setInterval(load, 5000);
+</script>
+</body>
+</html>

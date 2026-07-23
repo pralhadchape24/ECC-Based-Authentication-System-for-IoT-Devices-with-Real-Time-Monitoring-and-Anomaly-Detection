@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>IoT SecureAuth — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#030810;color:#c8e0f4;font-family:'Rajdhani',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,245,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(0,245,255,.06) 0%,transparent 65%);pointer-events:none;}
+.scanline{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:999;}
+.box{position:relative;z-index:1;background:rgba(6,15,30,.92);border:1px solid rgba(0,245,255,.15);border-radius:16px;padding:44px 40px;width:100%;max-width:400px;backdrop-filter:blur(12px);animation:fadeUp .5s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#00f5ff,transparent);border-radius:16px 16px 0 0;}
+.logo{text-align:center;margin-bottom:32px;}
+.logo-icon{font-size:40px;margin-bottom:10px;display:block;filter:drop-shadow(0 0 12px rgba(0,245,255,.5));}
+h1{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:#00f5ff;letter-spacing:4px;text-shadow:0 0 20px rgba(0,245,255,.4);}
+.sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:#4a6a8a;letter-spacing:4px;margin-top:4px;}
+.field{margin-bottom:18px;}
+label{display:block;font-family:'Share Tech Mono',monospace;font-size:10px;color:#4a6a8a;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+input{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.15);color:#c8e0f4;padding:12px 16px;border-radius:8px;font-family:'Share Tech Mono',monospace;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;}
+input:focus{border-color:#00f5ff;box-shadow:0 0 12px rgba(0,245,255,.2);}
+.error{background:rgba(255,51,102,.1);border:1px solid rgba(255,51,102,.3);color:#ff3366;padding:10px 14px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;margin-bottom:18px;letter-spacing:1px;}
+.btn-login{width:100%;background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.4);color:#00f5ff;padding:13px;border-radius:8px;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:3px;cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.btn-login:hover{background:rgba(0,245,255,.2);box-shadow:0 0 20px rgba(0,245,255,.3);}
+.hint{text-align:center;margin-top:18px;font-family:'Share Tech Mono',monospace;font-size:10px;color:#4a6a8a;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="box">
+  <div class="logo">
+    <span class="logo-icon">🔐</span>
+    <h1>SECUREIOT</h1>
+    <div class="sub">ECC Authentication System</div>
+  </div>
+  {% if error %}
+  <div class="error">⚠ {{ error }}</div>
+  {% endif %}
+  <form method="POST">
+    <div class="field">
+      <label>Username</label>
+      <input type="text" name="username" placeholder="admin" autocomplete="off" autofocus/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="••••••••"/>
+    </div>
+    <button type="submit" class="btn-login">▶ ACCESS SYSTEM</button>
+  </form>
+  <div class="hint">Default: admin / admin123</div>
+</div>
+</body>
+</html>
