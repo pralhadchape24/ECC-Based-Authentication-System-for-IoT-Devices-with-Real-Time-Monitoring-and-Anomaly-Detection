@@ -24,7 +24,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
-
+ 
 ---
 
 ## 📸 Dashboard Preview
@@ -35,11 +35,11 @@
 ╠══════════════════════════════════════════════════════════╣
 ║  Devices: 2    Online: 2    Auth OK: 47    Fail: 1       ║
 ╠════════════════════╦═════════════════════════════════════╣
-║  📡 ESP001 🟢      ║  📋 Activity Log                    ║
+║  📡 ESP001 🟢     ║  📋 Activity Log                    ║
 ║  Last seen: 3s ago ║  ✅ AUTH_SUCCESS  ESP001  22:14:01  ║
 ║  Token: [████░] 72%║  📦 DATA_ACCEPTED ESP002  22:14:05  ║
 ╠════════════════════║  🔑 CHALLENGE     ESP001  22:14:09  ║
-║  📡 ESP002 🟢      ║  ✅ AUTH_SUCCESS  ESP002  22:14:11  ║
+║  📡 ESP002 🟢     ║  ✅ AUTH_SUCCESS  ESP002  22:14:11  ║
 ║  Last seen: 7s ago ║                                     ║
 ║  Token: [██░░░] 41%║  🛡 Security Score: 98 / 100        ║
 ╚════════════════════╩═════════════════════════════════════╝
