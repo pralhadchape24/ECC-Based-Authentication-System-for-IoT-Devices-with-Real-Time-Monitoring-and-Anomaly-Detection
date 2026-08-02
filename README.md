@@ -3,7 +3,7 @@
 # 🔐 IoT ECC Authentication System
 
 <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=22&duration=3000&pause=1000&color=00F5FF&center=true&vCenter=true&width=600&lines=ECC-Based+Secure+IoT+Authentication;Real-Time+Monitoring+Dashboard;Replay+Attack+Prevention;Multi-Device+Support" alt="Typing SVG" />
-
+ 
 <br/>
  
 [![Python](https://img.shields.io/badge/Python-3.13-blue?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
