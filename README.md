@@ -72,7 +72,7 @@ The **IoT ECC Authentication System** solves a critical problem in IoT security:
 Traditional IoT systems use **API keys or passwords** — if intercepted once, the attacker has permanent access. Our system uses **Elliptic Curve Digital Signature Algorithm (ECDSA)** on the P-256 curve, the same cryptography that secures HTTPS and modern banking.
 
 ### Why ECC?
-
+ 
 | Property | RSA-3072 | ECC P-256 |
 |---|---|---|
 | Equivalent Security | 3072-bit key | **256-bit key** |
