@@ -85,7 +85,7 @@ Traditional IoT systems use **API keys or passwords** — if intercepted once, t
 
 ## ⚙️ How It Works
 
-``` 
+```  
 ESP32                                    Flask Server
   │                                           │
   │──── POST /request_challenge ─────────────►│
