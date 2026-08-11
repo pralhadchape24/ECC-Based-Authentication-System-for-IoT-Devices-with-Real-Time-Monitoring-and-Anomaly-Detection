@@ -110,7 +110,7 @@ ESP32                                    Flask Server
 ```
 
 ### Key Principle
-> **The private key NEVER leaves the ESP32.** Only the mathematical signature is sent. Even if someone intercepts all network traffic, they cannot extract or replicate the private key.
+> **The private key NEVER leaves the ESP32.** Only the mathematical signature is sent. Even if someone intercepts all network traffic, they cannot extract or replicate the private key. 
 
 ---
 
