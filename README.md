@@ -302,7 +302,7 @@ String server        = "http://192.168.137.1:5000";
 Upload to ESP32 using Arduino IDE.
 
 ### 7. Start Flask Server
-```bash
+```bash 
 python app.py
 ```
 
