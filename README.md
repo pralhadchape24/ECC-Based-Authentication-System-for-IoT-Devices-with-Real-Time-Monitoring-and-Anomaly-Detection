@@ -291,7 +291,7 @@ const char* DEVICE_ID = "ESP001";          // device name
 const char* private_key_pem = R"KEY(
 -----BEGIN PRIVATE KEY-----
 <paste contents of private_key_ESP001.pem here>
------END PRIVATE KEY-----
+-----END PRIVATE KEY----- 
 )KEY";
 
 const char* ssid     = "YOUR_WIFI_SSID";
