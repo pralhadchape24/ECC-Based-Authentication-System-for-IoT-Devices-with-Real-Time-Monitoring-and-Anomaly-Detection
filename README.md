@@ -214,7 +214,7 @@ IoT-Authentication-Server/
 | DHT11 Pin | ESP32 Pin |
 |---|---|
 | VCC | 3.3V |
-| GND | GND |
+| GND | GND | 
 | DATA | GPIO 4 |
 
 ### Wiring — HC-SR04
