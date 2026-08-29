@@ -193,7 +193,7 @@ IoT-Authentication-Server/
 └── .gitignore                   ← Excludes .pem and .db files
 ```
 
-> ⚠️ **Security Note:** `.pem` key files and `database.db` are excluded from version control via `.gitignore`. Never commit private keys to GitHub.
+> ⚠️ **Security Note:** `.pem` key files and `database.db` are excluded from version control via `.gitignore`. Never commit private keys to GitHub. 
 
 ---
 
